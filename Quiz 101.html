@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Justice League Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0b1e5b 0%, #1e3c72 50%, #2a5298 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #0d1b3e;
+            width: 100%;
+            max-width: 600px;
+            border-radius: 16px;
+            border-top: 4px solid #ffd700;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Start Screen */
+        #start-screen h1 {
+            font-size: 2.2rem;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        #start-screen p {
+            color: #b9c2e0;
+            margin-bottom: 30px;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #ffd700 0%, #f0a500 100%);
+            color: #0d1b3e;
+            border: none;
+            padding: 14px 40px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240, 180, 41, 0.45);
+        }
+
+        /* Red variant for the Start Quiz button */
+        .btn-red {
+            background: linear-gradient(135deg, #ff4b2b 0%, #c0392b 100%);
+            color: #ffffff;
+        }
+
+        .btn-red:hover {
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        /* Quiz Screen */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        #question-count {
+            color: #9aa5ce;
+            font-size: 0.95rem;
+        }
+
+        #timer {
+            background: #ffd700;
+            color: #0d1b3e;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        #timer.danger {
+            background: #e74c3c;
+            color: #ffffff;
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to   { transform: scale(1.1); }
+        }
+
+        .timer-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #16224d;
+            border-radius: 3px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        #timer-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #f0a500);
+            width: 100%;
+        }
+
+        #question-text {
+            color: #ffffff;
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            min-height: 60px;
+        }
+
+        .option {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            background: #16224d;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            font-size: 1rem;
+            color: #e8eaf6;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option:hover:not(:disabled) {
+            background: #1e2d63;
+            border-color: #ffd700;
+            transform: translateX(5px);
+        }
+
+        .option:disabled {
+            cursor: default;
+        }
+
+        .option.correct {
+            background: #14532d;
+            border-color: #22c55e;
+            color: #d8f3dc;
+        }
+
+        .option.wrong {
+            background: #5c1a1a;
+            border-color: #ef4444;
+            color: #fde2e4;
+        }
+
+        /* Result Screen */
+        #result-screen h1 {
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        #score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffd700 0%, #f0a500 100%);
+            color: #0d1b3e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-weight: bold;
+        }
+
+        #score-fraction {
+            font-size: 2rem;
+        }
+
+        #result-message {
+            color: #b9c2e0;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 480px) {
+            #question-text { font-size: 1.15rem; }
+            .screen { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <h1>🦸 Justice League Quiz</h1>
+            <p>Test your knowledge of DC's greatest heroes!<br>20 multiple-choice questions — beat the clock on each one!</p>
+            <button class="btn btn-red" onclick="startQuiz()">Start Quiz</button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen">
+            <div class="quiz-header">
+                <span id="question-count"></span>
+                <div id="timer">15</div>
+            </div>
+            <div class="timer-bar-container">
+                <div id="timer-bar"></div>
+            </div>
+            <h2 id="question-text"></h2>
+            <div id="options"></div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="screen">
+            <h1>Quiz Complete! 🎉</h1>
+            <div id="score-circle">
+                <span id="score-fraction">0/0</span>
+                <span id="score-percent">0%</span>
+            </div>
+            <p id="result-message"></p>
+            <button class="btn" onclick="restartQuiz()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // ===================== QUIZ DATA =====================
+        // answer = index of the correct option (0 = first option)
+        // time = seconds allowed for that question
+        const questions = [
+            {
+                question: "Which superhero team do Superman, Batman, and Wonder Woman belong to?",
+                options: ["The Avengers", "Justice League", "X-Men", "Teen Titans"],
+                answer: 1,
+                time: 10
+            },
+            {
+                question: "What is Batman's real name?",
+                options: ["Clark Kent", "Bruce Wayne", "Barry Allen", "Dick Grayson"],
+                answer: 1,
+                time: 10
+            },
+            {
+                question: "Which planet is Superman from?",
+                options: ["Krypton", "Thanagar", "Oa", "Apokolips"],
+                answer: 0,
+                time: 10
+            },
+            {
+                question: "Which island is Wonder Woman's home?",
+                options: ["Atlantis", "Metropolis", "Themyscira", "Gotham City"],
+                answer: 2,
+                time: 10
+            },
+            {
+                question: "What is the Flash's real name?",
+                options: ["Hal Jordan", "Oliver Queen", "Barry Allen", "Victor Stone"],
+                answer: 2,
+                time: 10
+            },
+            {
+                question: "Which Justice League member rules the underwater kingdom of Atlantis?",
+                options: ["Cyborg", "Aquaman", "Batman", "Green Lantern"],
+                answer: 1,
+                time: 10
+            },
+            {
+                question: "What is the name of the Justice League's orbital headquarters?",
+                options: ["The Batcave", "The Watchtower", "The Hall of Doom", "The Fortress of Solitude"],
+                answer: 1,
+                time: 15
+            },
+            {
+                question: "What is Superman's greatest weakness?",
+                options: ["Kryptonite", "Water", "Lead", "Sunlight"],
+                answer: 0,
+                time: 10
+            },
+            {
+                question: "Which city does Batman protect?",
+                options: ["Metropolis", "Central City", "Star City", "Gotham City"],
+                answer: 3,
+                time: 10
+            },
+            {
+                question: "What is Wonder Woman's secret identity?",
+                options: ["Dinah Lance", "Diana Prince", "Lois Lane", "Mera"],
+                answer: 1,
+                time: 10
+            },
+            {
+                question: "Which newspaper does Clark Kent work for?",
+                options: ["The Daily Bugle", "The Daily Planet", "The Gotham Gazette", "The Central City Citizen"],
+                answer: 1,
+                time: 10
+            },
+            {
+                question: "Which villain is known as the 'Clown Prince of Crime'?",
+                options: ["The Riddler", "The Penguin", "The Joker", "Two-Face"],
+                answer: 2,
+                time: 10
+            },
+            {
+                question: "Which Justice League member's real name is Victor Stone?",
+                options: ["Cyborg", "Aquaman", "The Flash", "Martian Manhunter"],
+                answer: 0,
+                time: 10
+            },
+            {
+                question: "What is the name of Batman's loyal butler?",
+                options: ["Alfred Pennyworth", "Jarvis", "James Gordon", "Lucius Fox"],
+                answer: 0,
+                time: 10
+            },
+            {
+                question: "Which villain is the Flash's archenemy?",
+                options: ["Reverse-Flash", "Black Manta", "Sinestro", "Doomsday"],
+                answer: 0,
+                time: 15
+            },
+            {
+                question: "Which city does Superman call home?",
+                options: ["Gotham City", "Metropolis", "Coast City", "Keystone City"],
+                answer: 1,
+                time: 10
+            },
+            {
+                question: "Which alien starfish villain did the League fight in their first 1960 comic appearance?",
+                options: ["Starro", "Brainiac", "Darkseid", "Despero"],
+                answer: 0,
+                time: 15
+            },
+            {
+                question: "Who is Aquaman's archenemy?",
+                options: ["Black Manta", "Weather Wizard", "Mirror Master", "Gorilla Grodd"],
+                answer: 0,
+                time: 15
+            },
+            {
+                question: "Which villain killed Superman in 'The Death of Superman' storyline?",
+                options: ["Bane", "Doomsday", "General Zod", "Darkseid"],
+                answer: 1,
+                time: 10
+            },
+            {
+                question: "Which League member is a shapeshifting telepath from Mars?",
+                options: ["Martian Manhunter", "Superman", "Green Lantern", "Shazam"],
+                answer: 0,
+                time: 10
+            }
+        ];
+
+        // ===================== STATE =====================
+        let currentQuestion = 0;
+        let score = 0;
+        let timeLeft = 0;
+        let timerInterval = null;
+
+        // ===================== SCREENS =====================
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function startQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            showScreen('quiz-screen');
+            showQuestion();
+        }
+
+        function restartQuiz() {
+            showScreen('start-screen');
+        }
+
+        // ===================== QUESTIONS =====================
+        function showQuestion() {
+            const q = questions[currentQuestion];
+
+            document.getElementById('question-count').textContent =
+                `Question ${currentQuestion + 1} of ${questions.length}`;
+            document.getElementById('question-text').textContent = q.question;
+
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+
+            q.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option';
+                btn.textContent = option;
+                btn.onclick = () => selectAnswer(index);
+                optionsDiv.appendChild(btn);
+            });
+
+            startTimer(q.time);
+        }
+
+        // ===================== TIMER =====================
+        function startTimer(seconds) {
+            clearInterval(timerInterval);
+            timeLeft = seconds;
+
+            const timerText = document.getElementById('timer');
+            const timerBar = document.getElementById('timer-bar');
+
+            timerText.textContent = timeLeft;
+            timerText.classList.remove('danger');
+
+            // Reset bar to full, then animate down to 0 over the time limit
+            timerBar.style.transition = 'none';
+            timerBar.style.width = '100%';
+            void timerBar.offsetHeight; // force reflow so the reset applies first
+            timerBar.style.transition = `width ${seconds}s linear`;
+            timerBar.style.width = '0%';
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerText.textContent = Math.max(timeLeft, 0);
+
+                if (timeLeft <= 5 && timeLeft > 0) {
+                    timerText.classList.add('danger');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timeUp();
+                }
+            }, 1000);
+        }
+
+        function freezeTimerBar() {
+            const bar = document.getElementById('timer-bar');
+            const width = bar.getBoundingClientRect().width;
+            bar.style.transition = 'none';
+            bar.style.width = width + 'px';
+        }
+
+        // ===================== ANSWERING =====================
+        function selectAnswer(index) {
+            if (timeLeft <= 0) return; // too late, time already ran out
+
+            clearInterval(timerInterval);
+            freezeTimerBar();
+
+            const q = questions[currentQuestion];
+            const buttons = document.querySelectorAll('.option');
+            buttons.forEach(btn => (btn.disabled = true));
+
+            if (index === q.answer) {
+                score++;
+                buttons[index].classList.add('correct');
+            } else {
+                buttons[index].classList.add('wrong');
+                buttons[q.answer].classList.add('correct');
+            }
+
+            setTimeout(nextQuestion, 1400);
+        }
+
+        function timeUp() {
+            const q = questions[currentQuestion];
+            const buttons = document.querySelectorAll('.option');
+            buttons.forEach(btn => (btn.disabled = true));
+            buttons[q.answer].classList.add('correct'); // reveal correct answer
+
+            setTimeout(nextQuestion, 1400);
+        }
+
+        // ===================== RESULTS =====================
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            showScreen('result-screen');
+            const percent = Math.round((score / questions.length) * 100);
+
+            document.getElementById('score-fraction').textContent = `${score}/${questions.length}`;
+            document.getElementById('score-percent').textContent = `${percent}%`;
+
+            let message;
+            if (percent === 100) message = "Perfect score! The League salutes you, hero! 🏆";
+            else if (percent >= 75) message = "Great job! You're true League material! 🎉";
+            else if (percent >= 50) message = "Not bad! Keep training at the Hall of Justice! 👍";
+            else message = "Every hero starts somewhere. Return to the Hall of Justice and train! 💪";
+
+            document.getElementById('result-message').textContent = message;
+        }
+    </script>
+</body>
+</html>
